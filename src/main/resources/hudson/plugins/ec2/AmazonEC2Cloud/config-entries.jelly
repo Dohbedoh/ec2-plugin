@@ -33,9 +33,23 @@ THE SOFTWARE.
   </f:entry>
   <f:description>The regions will be populated once the keys above are entered.
   </f:description>
-  <f:entry title="${%Region}" field="region">
-    <f:select/>
-  </f:entry>
+  <f:section title="Region">
+    <f:radioBlock name="configureRegionRadio" value="true" checked="true" title="${%Enter Region}" inline="true">
+      <f:nested>
+        <f:entry title="${%AWS Region}" field="region">
+          <f:textbox/>
+        </f:entry>
+        <f:validateButton method="validateRepositoryUrlAndCredentials" title="${%Validate}" with="repositoryUrl,credentialsId"/>
+      </f:nested>
+    </f:radioBlock>
+    <f:radioBlock name="configureRegionRadio" value="false" checked="false" title="${%Select Regions}" inline="true">
+      <f:nested>
+        <f:entry title ="${%AWS Region}" field="region">
+          <f:select/>
+        </f:entry>
+      </f:nested>
+    </f:radioBlock>
+  </f:section>
   <f:entry field="sshKeysCredentialsId" title="${%EC2 Key Pair's Private Key}">
     <c:select includeUser="false" checkMethod="post"/>
   </f:entry>
