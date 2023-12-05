@@ -82,6 +82,7 @@ public class EC2Computer extends SlaveComputer {
         return "";
     }
 
+    @CheckForNull
     public EC2Cloud getCloud() {
         EC2AbstractSlave node = getNode();
         return node == null ? null : node.getCloud();
@@ -91,7 +92,10 @@ public class EC2Computer extends SlaveComputer {
     public SlaveTemplate getSlaveTemplate() {
         EC2AbstractSlave node = getNode();
         if (node != null) {
-            return node.getCloud().getTemplate(node.templateDescription);
+            EC2Cloud ec2Cloud = getCloud();
+            if(ec2Cloud != null) {
+                return ec2Cloud.getTemplate(node.templateDescription);
+            }
         }
         return null;
     }
@@ -183,9 +187,13 @@ public class EC2Computer extends SlaveComputer {
      * <p>
      * Unlike {@link #describeInstance()}, this method always return the current status by calling EC2.
      */
+    @CheckForNull
     public InstanceState getState() throws AmazonClientException, InterruptedException {
         ec2InstanceDescription = CloudHelper.getInstanceWithRetry(getInstanceId(), getCloud());
-        return InstanceState.find(ec2InstanceDescription.getState().getName());
+        if (ec2InstanceDescription != null) {
+            return InstanceState.find(ec2InstanceDescription.getState().getName());
+        }
+        return null;
     }
 
     /**

@@ -82,7 +82,7 @@ public abstract class SshHostKeyVerificationStrategy implements Describable<SshH
         TaskListener listener = computer.getListener();
 
         try {
-            if(!computer.getState().equals(InstanceState.RUNNING)) {
+            if(!InstanceState.RUNNING.equals(computer.getState())) {
                 EC2Cloud.log(logger, Level.INFO, listener, "The instance " + computer.getName() + " is not running, waiting to validate the key against the console");
             }
         } catch (InterruptedException e) {

@@ -158,7 +158,7 @@ public class EC2RetentionStrategy extends RetentionStrategy<EC2Computer> impleme
             //Don't bother checking anything else if the instance is already in the desired state:
             // * Already Terminated
             // * We use stop-on-terminate and the instance is currently stopped or stopping
-            if (InstanceState.TERMINATED.equals(state)
+            if (state == null || InstanceState.TERMINATED.equals(state)
                   || (slaveTemplate != null && slaveTemplate.stopOnTerminate) && (InstanceState.STOPPED.equals(state) || InstanceState.STOPPING.equals(state))) {
                 if (computer.isOnline()) {
                     LOGGER.info("External Stop of " + computer.getName() + " detected - disconnecting. instance status" + state.toString());
