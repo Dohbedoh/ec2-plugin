@@ -774,9 +774,8 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     String getRootCommandPrefix() {
-        String commandPrefix = (amiType.isUnix()
-                ? ((UnixData) amiType).getRootCommandPrefix()
-                : (amiType.isMac() ? ((MacData) amiType).getRootCommandPrefix() : ""));
+        String commandPrefix = amiType.isSsh() ? ((SSHData) amiType).getRootCommandPrefix() : "";
+
         if (commandPrefix == null || commandPrefix.isEmpty()) {
             return "";
         }
@@ -784,9 +783,7 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     String getSlaveCommandPrefix() {
-        String commandPrefix = (amiType.isUnix()
-                ? ((UnixData) amiType).getSlaveCommandPrefix()
-                : (amiType.isMac() ? ((MacData) amiType).getSlaveCommandPrefix() : ""));
+        String commandPrefix = amiType.isSsh() ? ((SSHData) amiType).getSlaveCommandPrefix() : "";
         if (commandPrefix == null || commandPrefix.isEmpty()) {
             return "";
         }
@@ -794,9 +791,7 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     String getSlaveCommandSuffix() {
-        String commandSuffix = (amiType.isUnix()
-                ? ((UnixData) amiType).getSlaveCommandSuffix()
-                : (amiType.isMac() ? ((MacData) amiType).getSlaveCommandSuffix() : ""));
+        String commandSuffix = amiType.isSsh() ? ((SSHData) amiType).getSlaveCommandSuffix() : "";
         if (commandSuffix == null || commandSuffix.isEmpty()) {
             return "";
         }
@@ -812,9 +807,7 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     public int getSshPort() {
-        String sshPort = (amiType.isUnix()
-                ? ((UnixData) amiType).getSshPort()
-                : (amiType.isMac() ? ((MacData) amiType).getSshPort() : "22"));
+        String sshPort = amiType.isSsh() ? ((SSHData) amiType).getSshPort() : "22";
         if (sshPort == null || sshPort.isEmpty()) {
             return 22;
         }
@@ -1004,11 +997,11 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     public Secret getAdminPassword() {
-        return amiType.isWindows() ? ((WindowsData) amiType).getPassword() : Secret.fromString("");
+        return amiType instanceof WindowsData ? ((WindowsData) amiType).getPassword() : Secret.fromString("");
     }
 
     public boolean isUseHTTPS() {
-        return amiType.isWindows() && ((WindowsData) amiType).isUseHTTPS();
+        return amiType instanceof WindowsData && ((WindowsData) amiType).isUseHTTPS();
     }
 
     public int getBootDelay() {
@@ -1032,11 +1025,11 @@ public abstract class EC2AbstractSlave extends Slave {
     }
 
     public boolean isSpecifyPassword() {
-        return amiType.isWindows() && ((WindowsData) amiType).isSpecifyPassword();
+        return amiType instanceof WindowsData && ((WindowsData) amiType).isSpecifyPassword();
     }
 
     public boolean isAllowSelfSignedCertificate() {
-        return amiType.isWindows() && ((WindowsData) amiType).isAllowSelfSignedCertificate();
+        return amiType instanceof WindowsData && ((WindowsData) amiType).isAllowSelfSignedCertificate();
     }
 
     public static ListBoxModel fillZoneItems(AWSCredentialsProvider credentialsProvider, String region) {

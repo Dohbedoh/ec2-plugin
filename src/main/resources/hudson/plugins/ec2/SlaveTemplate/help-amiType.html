@@ -2,11 +2,13 @@
   Choose the type of AMI this agent uses:
   <ul>
     <li>Unix: connected to with ssh.</li>
+	<li>Mac: connected to with ssh.</li>
+	<li>Windows (ssh): connected to with ssh.</li>
     <li>Windows: connected to with CIFS and WinRM/WinRS.</li>
   </ul>
   
   <hr/>
-  Notes for Windows AMI:
+  Notes for Windows AMI with WinRM:
   <br/>
   EC2 Windows agents are accessed with CIFS (to send the initial Jenkins agent.jar) and WinRM to launch and connect
 to the agent afterward.

@@ -23,14 +23,12 @@
  */
 package hudson.plugins.ec2.ssh;
 
-import com.amazonaws.services.ec2.model.Instance;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.TaskListener;
 import hudson.plugins.ec2.EC2AbstractSlave;
 import hudson.plugins.ec2.EC2Computer;
 import hudson.plugins.ec2.SlaveTemplate;
 import hudson.slaves.CommandLauncher;
-import hudson.slaves.ComputerLauncher;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -39,14 +37,13 @@ import java.util.logging.Logger;
 import org.apache.sshd.client.session.ClientSession;
 
 /**
- * {@link ComputerLauncher} that connects to a Mac agent on EC2 by using SSH.
+ * {@link hudson.slaves.ComputerLauncher} that connects to a Windows agent on EC2 by using SSH.
  *
  * @author Kohsuke Kawaguchi
  */
-public class EC2MacLauncher extends EC2SSHLauncher {
+public class EC2WindowsSSHLauncher extends EC2SSHLauncher {
 
-    private static final Logger LOGGER = Logger.getLogger(EC2MacLauncher.class.getName());
-    private static final String CORRETTO_LATEST_URL = "https://corretto.aws/downloads/latest";
+    private static final Logger LOGGER = Logger.getLogger(EC2WindowsSSHLauncher.class.getName());
 
     @Override
     protected void preInstalls(
@@ -56,45 +53,19 @@ public class EC2MacLauncher extends EC2SSHLauncher {
             @NonNull PrintStream logger,
             @NonNull TaskListener listener)
             throws IOException, InterruptedException {
-        try {
-            Instance nodeInstance = computer.describeInstance();
-            if (nodeInstance.getInstanceType().equals("mac2.metal")) {
-                LOGGER.info("Running Command for mac2.metal");
-                executeRemote(
-                        computer,
-                        clientSession,
-                        javaPath + " -fullversion",
-                        "curl -L -O "
-                                + CORRETTO_LATEST_URL
-                                + "/amazon-corretto-11-aarch64-macos-jdk.pkg; sudo installer -pkg amazon-corretto-11-aarch64-macos-jdk.pkg -target /",
-                        logger,
-                        listener);
-            } else {
-                executeRemote(
-                        computer,
-                        clientSession,
-                        javaPath + " -fullversion",
-                        "curl -L -O "
-                                + CORRETTO_LATEST_URL
-                                + "/amazon-corretto-11-x64-macos-jdk.pkg; sudo installer -pkg amazon-corretto-11-x64-macos-jdk.pkg -target /",
-                        logger,
-                        listener);
-            }
-        } catch (InterruptedException ex) {
-            LOGGER.warning(ex.getMessage());
-        }
+        // java must be pre-installed on the Windows Machine
     }
 
     @Override
     protected void createDir(@NonNull ClientSession clientSession, @NonNull String dir, @NonNull PrintStream logger)
             throws IOException, InterruptedException {
-        executeRemote(clientSession, "mkdir -p " + dir, logger);
+        executeRemote(clientSession, "MKDIR " + dir, logger);
     }
 
     @Override
     protected boolean fileExist(@NonNull ClientSession clientSession, @NonNull String file, @NonNull PrintStream logger)
             throws IOException, InterruptedException {
-        return executeRemote(clientSession, "test -e " + file, logger);
+        return executeRemote(clientSession, "IF NOT EXIST " + file + " EXIT /B 999", logger);
     }
 
     @Override
@@ -106,16 +77,24 @@ public class EC2MacLauncher extends EC2SSHLauncher {
             @NonNull String launchString)
             throws IOException, InterruptedException {
         File identityKeyFile = createIdentityKeyFile(computer);
+        String ec2HostAddress = getEC2HostAddress(computer, template);
+        File hostKeyFile = createHostKeyFile(computer, ec2HostAddress, listener);
+        String userKnownHostsFileFlag = "";
+        if (hostKeyFile != null) {
+            userKnownHostsFileFlag = String.format(" -o \"UserKnownHostsFile=%s\"", hostKeyFile.getAbsolutePath());
+        }
 
         try {
             // Obviously the controller must have an installed ssh client.
             // Depending on the strategy selected on the UI, we set the StrictHostKeyChecking flag
             String sshClientLaunchString = String.format(
-                    "ssh -o StrictHostKeyChecking=%s -i %s %s@%s -p %d %s",
+                    "ssh -o StrictHostKeyChecking=%s%s%s -i %s %s@%s -p %d %s",
                     template.getHostKeyVerificationStrategy().getSshCommandEquivalentFlag(),
+                    userKnownHostsFileFlag,
+                    getEC2HostKeyAlgorithmFlag(computer),
                     identityKeyFile.getAbsolutePath(),
                     node.remoteAdmin,
-                    getEC2HostAddress(computer, template),
+                    ec2HostAddress,
                     node.getSshPort(),
                     launchString);
 
@@ -126,26 +105,29 @@ public class EC2MacLauncher extends EC2SSHLauncher {
             if (!identityKeyFile.delete()) {
                 LOGGER.log(Level.WARNING, "Failed to delete identity key file");
             }
+            if (hostKeyFile != null && !hostKeyFile.delete()) {
+                LOGGER.log(Level.WARNING, "Failed to delete host key file");
+            }
         }
     }
 
     @Override
     protected String getDefaultTmpDir() {
-        return "/tmp";
+        return "C:\\Windows\\Temp";
     }
 
     @Override
     protected String getInitFileName() {
-        return "init.sh";
+        return "init.bat";
     }
 
     @Override
     protected String getInitMarkerFilePath() {
-        return "~/.hudson-run-init";
+        return "%USERPROFILE%\\.hudson-run-init";
     }
 
     @Override
     protected String touchFileCommand(@NonNull String filePath) {
-        return "touch " + filePath;
+        return "COPY NUL " + filePath;
     }
 }

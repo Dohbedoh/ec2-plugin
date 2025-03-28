@@ -83,14 +83,14 @@ public class SelfSignedCertificateAllowedMonitor extends AdministrativeMonitor {
     private boolean gatherInsecureTemplate(EC2Cloud cloud) {
         List<SlaveTemplate> templates = cloud.getTemplates();
         for (SlaveTemplate template : templates) {
-            // It's only for window templates
-            if (!template.isWindowsSlave()) {
+            // It's only for window templates with WinRM
+            AMITypeData amiTypeData = template.getAmiType();
+
+            if (!(amiTypeData instanceof WindowsData)) {
                 continue;
             }
 
-            AMITypeData amiTypeData = template.getAmiType();
             if (insecureTemplates.size() < MAX_TEMPLATES_FOUND
-                    && amiTypeData.isWindows()
                     && ((WindowsData) amiTypeData).isAllowSelfSignedCertificate()) {
                 // it is insecure
                 insecureTemplates.add(template.getDisplayName());

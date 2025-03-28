@@ -4,10 +4,10 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class MacData extends SSHData {
+public class WindowsSSHData extends SSHData {
 
     @DataBoundConstructor
-    public MacData(
+    public WindowsSSHData(
             String rootCommandPrefix,
             String slaveCommandPrefix,
             String slaveCommandSuffix,
@@ -18,7 +18,7 @@ public class MacData extends SSHData {
 
     @Override
     public boolean isWindows() {
-        return false;
+        return true;
     }
 
     @Override
@@ -28,14 +28,14 @@ public class MacData extends SSHData {
 
     @Override
     public boolean isMac() {
-        return true;
+        return false;
     }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<AMITypeData> {
         @Override
         public String getDisplayName() {
-            return "mac";
+            return "windows (ssh)";
         }
     }
 }

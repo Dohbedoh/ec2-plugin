@@ -1470,13 +1470,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
 
     public int getSshPort() {
         try {
-            String sshPort = "";
-            if (amiType.isUnix()) {
-                sshPort = ((UnixData) amiType).getSshPort();
-            }
-            if (amiType.isMac()) {
-                sshPort = ((MacData) amiType).getSshPort();
-            }
+            String sshPort = amiType.isSsh() ? ((SSHData) amiType).getSshPort() : "";
             return Integer.parseInt(sshPort);
         } catch (NumberFormatException e) {
             return 22;
@@ -1488,21 +1482,15 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     }
 
     public String getRootCommandPrefix() {
-        return (amiType.isUnix()
-                ? ((UnixData) amiType).getRootCommandPrefix()
-                : (amiType.isMac() ? ((MacData) amiType).getRootCommandPrefix() : ""));
+        return amiType.isSsh() ? ((SSHData) amiType).getRootCommandPrefix() : "";
     }
 
     public String getSlaveCommandPrefix() {
-        return (amiType.isUnix()
-                ? ((UnixData) amiType).getSlaveCommandPrefix()
-                : (amiType.isMac() ? ((MacData) amiType).getSlaveCommandPrefix() : ""));
+        return amiType.isSsh() ? ((SSHData) amiType).getSlaveCommandPrefix() : "";
     }
 
     public String getSlaveCommandSuffix() {
-        return (amiType.isUnix()
-                ? ((UnixData) amiType).getSlaveCommandSuffix()
-                : (amiType.isMac() ? ((MacData) amiType).getSlaveCommandSuffix() : ""));
+        return amiType.isSsh() ? ((SSHData) amiType).getSlaveCommandSuffix() : "";
     }
 
     public String chooseSubnetId() {
@@ -2728,11 +2716,11 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     }
 
     public Secret getAdminPassword() {
-        return amiType.isWindows() ? ((WindowsData) amiType).getPassword() : Secret.fromString("");
+        return amiType instanceof WindowsData ? ((WindowsData) amiType).getPassword() : Secret.fromString("");
     }
 
     public boolean isUseHTTPS() {
-        return amiType.isWindows() && ((WindowsData) amiType).isUseHTTPS();
+        return amiType instanceof WindowsData && ((WindowsData) amiType).isUseHTTPS();
     }
 
     /**
@@ -2771,7 +2759,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     }
 
     public boolean isAllowSelfSignedCertificate() {
-        return amiType.isWindows() && ((WindowsData) amiType).isAllowSelfSignedCertificate();
+        return amiType instanceof WindowsData && ((WindowsData) amiType).isAllowSelfSignedCertificate();
     }
 
     @Extension
