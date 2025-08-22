@@ -1,5 +1,6 @@
 package hudson.plugins.ec2.util;
 
+import hudson.init.Terminator;
 import hudson.plugins.ec2.EC2Computer;
 import hudson.plugins.ec2.ssh.verifiers.HostKey;
 import hudson.plugins.ec2.ssh.verifiers.HostKeyHelper;
@@ -7,7 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import org.apache.sshd.client.ClientBuilder;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.keyverifier.DelegatingServerKeyVerifier;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.signature.BuiltinSignatures;
 import org.apache.sshd.common.signature.Signature;
@@ -22,14 +25,28 @@ public final class SSHClientHelper {
         return INSTANCE;
     }
 
+    private SshClient client;
+
+    @Terminator
+    public synchronized void stop() throws Exception {
+        if (client != null) {
+            client.stop();
+        }
+    }
+
     /**
      * Set up an SSH client configured for the given {@link EC2Computer}.
      *
      * @param computer the {@link EC2Computer} the created client will connect to
      * @return an SSH client configured for this {@link EC2Computer}
      */
-    public SshClient setupSshClient(EC2Computer computer) {
-        SshClient client = SshClient.setUpDefaultClient();
+    public synchronized SshClient setupSshClient(EC2Computer computer) {
+        if (client != null) {
+            return client;
+        }
+        client = ClientBuilder.builder()
+                .serverKeyVerifier(new DelegatingServerKeyVerifier())
+                .build(true);
 
         List<BuiltinSignatures> preferred = getPreferredSignatures(computer);
         if (!preferred.isEmpty()) {
@@ -38,6 +55,7 @@ public final class SSHClientHelper {
             client.setSignatureFactories(new ArrayList<>(signatureFactoriesSet));
         }
 
+        client.start();
         return client;
     }
 
@@ -48,7 +66,7 @@ public final class SSHClientHelper {
      * @param computer return a list of signature for this computer.
      * @return an ordered list of signature algorithms that should be used.
      */
-    public List<BuiltinSignatures> getPreferredSignatures(EC2Computer computer) {
+    public static List<BuiltinSignatures> getPreferredSignatures(EC2Computer computer) {
         String trustedAlgorithm;
         try {
             HostKey trustedHostKey = HostKeyHelper.getInstance().getHostKey(computer);
